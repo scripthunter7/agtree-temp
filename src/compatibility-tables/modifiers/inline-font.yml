@@ -1,0 +1,29 @@
+adg_os_any:
+  name: inline-font
+  docs: https://adguard.com/kb/general/ad-filtering/create-own-filters/#inline-font-modifier
+  description: |-
+    The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.
+    E.g. '||example.org^$inline-font' is converting into:
+    ```
+    ||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:
+    ```
+
+adg_ext_any:
+  name: inline-font
+  docs: https://adguard.com/kb/general/ad-filtering/create-own-filters/#inline-font-modifier
+  description: |-
+    The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.
+    E.g. '||example.org^$inline-font' is converting into:
+    ```
+    ||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:
+    ```
+
+ubo_ext_any:
+  name: inline-font
+  docs: https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#inline-font
+  description: |-
+    The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.
+    E.g. '||example.org^$inline-font' is converting into:
+    ```
+    ||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:
+    ```
