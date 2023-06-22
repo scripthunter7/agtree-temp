@@ -3,7 +3,7 @@
 .swc
 .vscode
 coverage
-dist
+#dist
 node_modules
 
 # Release file for npm.
