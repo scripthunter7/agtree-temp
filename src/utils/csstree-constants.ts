@@ -8,7 +8,7 @@
  *
  * @see {@link https://github.com/csstree/csstree/blob/master/docs/ast.md#node-types}
  */
-export const enum CssTreeNodeType {
+export enum CssTreeNodeType {
     AnPlusB = 'AnPlusB',
     Atrule = 'Atrule',
     AtrulePrelude = 'AtrulePrelude',
@@ -57,7 +57,7 @@ export const enum CssTreeNodeType {
  *
  * @see {@link https://github.com/csstree/csstree/blob/master/docs/parsing.md#context}
  */
-export const enum CssTreeParserContext {
+export enum CssTreeParserContext {
     /**
      * Regular stylesheet, should be suitable in most cases (default)
      */

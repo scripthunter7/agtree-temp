@@ -72,7 +72,7 @@ export const defaultLocation: Location = {
  * - If the rule is `! This is just a comment`, then the marker will be `!`.
  * - If the rule is `# This is just a comment`, then the marker will be `#`.
  */
-export const enum CommentMarker {
+export enum CommentMarker {
     /**
      * Regular comment marker. It is supported by all ad blockers.
      */
@@ -89,7 +89,7 @@ export const enum CommentMarker {
  * Represents the main categories that an adblock rule can belong to.
  * Of course, these include additional subcategories.
  */
-export const enum RuleCategory {
+export enum RuleCategory {
     /**
      * Empty "rules" that are only containing whitespaces. These rules are handled just for convenience.
      */
@@ -120,7 +120,7 @@ export const enum RuleCategory {
 /**
  * Represents possible comment types.
  */
-export const enum CommentRuleType {
+export enum CommentRuleType {
     AgentCommentRule = 'AgentCommentRule',
     CommentRule = 'CommentRule',
     ConfigCommentRule = 'ConfigCommentRule',
@@ -132,7 +132,7 @@ export const enum CommentRuleType {
 /**
  * Represents possible cosmetic rule types.
  */
-export const enum CosmeticRuleType {
+export enum CosmeticRuleType {
     ElementHidingRule = 'ElementHidingRule',
     CssInjectionRule = 'CssInjectionRule',
     ScriptletInjectionRule = 'ScriptletInjectionRule',
@@ -143,7 +143,7 @@ export const enum CosmeticRuleType {
 /**
  * Represents possible cosmetic rule separators.
  */
-export const enum CosmeticRuleSeparator {
+export enum CosmeticRuleSeparator {
     /**
      * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
      */
