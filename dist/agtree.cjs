@@ -1,5 +1,5 @@
 /*
- * AGTree v1.0.1 (build date: Thu, 22 Jun 2023 07:48:36 GMT)
+ * AGTree v1.0.1 (build date: Fri, 23 Jun 2023 15:20:07 GMT)
  * (c) 2023 AdGuard Software Ltd.
  * Released under the MIT license
  * https://github.com/AdguardTeam/tsurlfilter/tree/master/packages/agtree#readme
@@ -808,6 +808,84 @@ exports.CosmeticRuleType = void 0;
     CosmeticRuleType["HtmlFilteringRule"] = "HtmlFilteringRule";
     CosmeticRuleType["JsInjectionRule"] = "JsInjectionRule";
 })(exports.CosmeticRuleType || (exports.CosmeticRuleType = {}));
+/**
+ * Represents possible cosmetic rule separators.
+ */
+exports.CosmeticRuleSeparator = void 0;
+(function (CosmeticRuleSeparator) {
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["ElementHiding"] = "##";
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["ElementHidingException"] = "#@#";
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["ExtendedElementHiding"] = "#?#";
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["ExtendedElementHidingException"] = "#@?#";
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["AbpSnippet"] = "#$#";
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    CosmeticRuleSeparator["AbpSnippetException"] = "#@$#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    CosmeticRuleSeparator["AdgCssInjection"] = "#$#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    CosmeticRuleSeparator["AdgCssInjectionException"] = "#@$#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    CosmeticRuleSeparator["AdgExtendedCssInjection"] = "#$?#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    CosmeticRuleSeparator["AdgExtendedCssInjectionException"] = "#@$?#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#scriptlets}
+     */
+    CosmeticRuleSeparator["AdgJsInjection"] = "#%#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#scriptlets}
+     */
+    CosmeticRuleSeparator["AdgJsInjectionException"] = "#@%#";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#html-filtering-rules}
+     */
+    CosmeticRuleSeparator["AdgHtmlFiltering"] = "$$";
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#html-filtering-rules}
+     */
+    CosmeticRuleSeparator["AdgHtmlFilteringException"] = "$@$";
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#scriptlet-injection}
+     */
+    CosmeticRuleSeparator["UboScriptletInjection"] = "##+";
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#scriptlet-injection}
+     */
+    CosmeticRuleSeparator["UboScriptletInjectionException"] = "#@#+";
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#html-filters}
+     */
+    CosmeticRuleSeparator["UboHtmlFiltering"] = "##^";
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#html-filters}
+     */
+    CosmeticRuleSeparator["UboHtmlFilteringException"] = "#@#^";
+})(exports.CosmeticRuleSeparator || (exports.CosmeticRuleSeparator = {}));
 
 /**
  * Customized syntax error class for Adblock Filter Parser,
@@ -957,6 +1035,18 @@ class CosmeticRuleSeparatorUtils {
         return separator[1] === AT_SIGN;
     }
     /**
+     * Checks whether the specified separator is marks an Extended CSS cosmetic rule.
+     *
+     * @param separator Separator to check
+     * @returns `true` if the separator is marks an Extended CSS cosmetic rule, `false` otherwise
+     */
+    static isExtendedCssMarker(separator) {
+        return (separator === exports.CosmeticRuleSeparator.ExtendedElementHiding
+            || separator === exports.CosmeticRuleSeparator.ExtendedElementHidingException
+            || separator === exports.CosmeticRuleSeparator.AdgExtendedCssInjection
+            || separator === exports.CosmeticRuleSeparator.AdgExtendedCssInjectionException);
+    }
+    /**
      * Looks for the cosmetic rule separator in the rule. This is a simplified version that
      * masks the recursive function.
      *
@@ -983,64 +1073,80 @@ class CosmeticRuleSeparatorUtils {
             if (rule[i] === '#') {
                 if (rule[i + 1] === '#') {
                     if (rule[i + 2] === '+') {
-                        return createResult(i, '##+');
+                        // ##+
+                        return createResult(i, exports.CosmeticRuleSeparator.UboScriptletInjection);
                     }
                     if (rule[i + 2] === '^') {
-                        return createResult(i, '##^');
+                        // ##^
+                        return createResult(i, exports.CosmeticRuleSeparator.UboHtmlFiltering);
                     }
                     if (rule[i - 1] !== SPACE) {
-                        return createResult(i, '##');
+                        // ##
+                        return createResult(i, exports.CosmeticRuleSeparator.ElementHiding);
                     }
                 }
                 if (rule[i + 1] === '?' && rule[i + 2] === '#') {
-                    return createResult(i, '#?#');
+                    // #?#
+                    return createResult(i, exports.CosmeticRuleSeparator.ExtendedElementHiding);
                 }
                 if (rule[i + 1] === '%' && rule[i + 2] === '#') {
-                    return createResult(i, '#%#');
+                    // #%#
+                    return createResult(i, exports.CosmeticRuleSeparator.AdgJsInjection);
                 }
                 if (rule[i + 1] === '$') {
                     if (rule[i + 2] === '#') {
-                        return createResult(i, '#$#');
+                        // #$#
+                        return createResult(i, exports.CosmeticRuleSeparator.AdgCssInjection);
                     }
                     if (rule[i + 2] === '?' && rule[i + 3] === '#') {
-                        return createResult(i, '#$?#');
+                        // #$?#
+                        return createResult(i, exports.CosmeticRuleSeparator.AdgExtendedCssInjection);
                     }
                 }
                 // Exceptions
                 if (rule[i + 1] === '@') {
                     if (rule[i + 2] === '#') {
                         if (rule[i + 3] === '+') {
-                            return createResult(i, '#@#+');
+                            // #@#+
+                            return createResult(i, exports.CosmeticRuleSeparator.UboScriptletInjectionException);
                         }
                         if (rule[i + 3] === '^') {
-                            return createResult(i, '#@#^');
+                            // #@#^
+                            return createResult(i, exports.CosmeticRuleSeparator.UboHtmlFilteringException);
                         }
                         if (rule[i - 1] !== SPACE) {
-                            return createResult(i, '#@#');
+                            // #@#
+                            return createResult(i, exports.CosmeticRuleSeparator.ElementHidingException);
                         }
                     }
                     if (rule[i + 2] === '?' && rule[i + 3] === '#') {
-                        return createResult(i, '#@?#');
+                        // #@?#
+                        return createResult(i, exports.CosmeticRuleSeparator.ExtendedElementHidingException);
                     }
                     if (rule[i + 2] === '%' && rule[i + 3] === '#') {
-                        return createResult(i, '#@%#');
+                        // #@%#
+                        return createResult(i, exports.CosmeticRuleSeparator.AdgJsInjectionException);
                     }
                     if (rule[i + 2] === '$') {
                         if (rule[i + 3] === '#') {
-                            return createResult(i, '#@$#');
+                            // #@$#
+                            return createResult(i, exports.CosmeticRuleSeparator.AdgCssInjectionException);
                         }
                         if (rule[i + 3] === '?' && rule[i + 4] === '#') {
-                            return createResult(i, '#@$?#');
+                            // #@$?#
+                            return createResult(i, exports.CosmeticRuleSeparator.AdgExtendedCssInjectionException);
                         }
                     }
                 }
             }
             if (rule[i] === '$') {
                 if (rule[i + 1] === '$') {
-                    return createResult(i, '$$');
+                    // $$
+                    return createResult(i, exports.CosmeticRuleSeparator.AdgHtmlFiltering);
                 }
                 if (rule[i + 1] === '@' && rule[i + 2] === '$') {
-                    return createResult(i, '$@$');
+                    // $@$
+                    return createResult(i, exports.CosmeticRuleSeparator.AdgHtmlFilteringException);
                 }
             }
         }
@@ -2492,7 +2598,9 @@ class ModifierParser {
      *
      * @param raw Raw modifier string
      * @param loc Location of the modifier
+     *
      * @returns Parsed modifier
+     * @throws An error if modifier name or value is empty.
      */
     static parse(raw, loc = defaultLocation) {
         let offset = 0;
@@ -4690,12 +4798,16 @@ class CosmeticRuleParser {
         }
     }
     /**
-     * Converts a cosmetic rule AST into a string.
+     * Generates the rule pattern from the AST.
      *
      * @param ast Cosmetic rule AST
-     * @returns Raw string
+     * @returns Raw rule pattern
+     * @example
+     * - '##.foo' → ''
+     * - 'example.com,example.org##.foo' → 'example.com,example.org'
+     * - '[$path=/foo/bar]example.com##.foo' → '[$path=/foo/bar]example.com'
      */
-    static generate(ast) {
+    static generatePattern(ast) {
         let result = EMPTY;
         // AdGuard modifiers (if any)
         if (ast.syntax === exports.AdblockSyntax.Adg && ast.modifiers && ast.modifiers.children.length > 0) {
@@ -4706,29 +4818,57 @@ class CosmeticRuleParser {
         }
         // Domain list (if any)
         result += DomainListParser.generate(ast.domains);
-        // Separator
-        result += ast.separator.value;
+        return result;
+    }
+    /**
+     * Generates the rule body from the AST.
+     *
+     * @param ast Cosmetic rule AST
+     * @returns Raw rule body
+     * @example
+     * - '##.foo' → '.foo'
+     * - 'example.com,example.org##.foo' → '.foo'
+     * - 'example.com#%#//scriptlet('foo')' → '//scriptlet('foo')'
+     */
+    static generateBody(ast) {
+        let result = EMPTY;
         // Body
         switch (ast.type) {
             case exports.CosmeticRuleType.ElementHidingRule:
-                result += ElementHidingBodyParser.generate(ast.body);
+                result = ElementHidingBodyParser.generate(ast.body);
                 break;
             case exports.CosmeticRuleType.CssInjectionRule:
-                result += CssInjectionBodyParser.generate(ast.body, ast.syntax);
+                result = CssInjectionBodyParser.generate(ast.body, ast.syntax);
                 break;
             case exports.CosmeticRuleType.HtmlFilteringRule:
-                result += HtmlFilteringBodyParser.generate(ast.body, ast.syntax);
+                result = HtmlFilteringBodyParser.generate(ast.body, ast.syntax);
                 break;
             case exports.CosmeticRuleType.JsInjectionRule:
                 // Native JS code
-                result += ast.body.value;
+                result = ast.body.value;
                 break;
             case exports.CosmeticRuleType.ScriptletInjectionRule:
-                result += ScriptletInjectionBodyParser.generate(ast.body, ast.syntax);
+                result = ScriptletInjectionBodyParser.generate(ast.body, ast.syntax);
                 break;
             default:
                 throw new Error('Unknown cosmetic rule type');
         }
+        return result;
+    }
+    /**
+     * Converts a cosmetic rule AST into a string.
+     *
+     * @param ast Cosmetic rule AST
+     * @returns Raw string
+     */
+    static generate(ast) {
+        let result = EMPTY;
+        // Pattern
+        result += CosmeticRuleParser.generatePattern(ast);
+        // Separator
+        result += ast.separator.value;
+        // Body
+        result += CosmeticRuleParser.generateBody(ast);
         return result;
     }
 }
@@ -5137,6 +5277,1091 @@ class FilterListParser {
     }
 }
 
+var data$F = { adg_os_any:{ name:"app",
+    assignable:true,
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#app-modifier",
+    description:"The $app modifier lets you narrow the rule coverage down to a specific application or a list of applications.\nThe modifier's behavior and syntax perfectly match the corresponding basic rules $app modifier." } };
+data$F.adg_os_any;
+
+var data$E = { adg_os_any:{ name:"badfilter",
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#badfilter-modifier",
+    description:"The rules with the $badfilter modifier disable other basic rules to which they refer. It means that\nthe text of the disabled rule should match the text of the $badfilter rule (without the $badfilter modifier)." },
+  adg_ext_any:{ name:"badfilter",
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#badfilter-modifier",
+    description:"The rules with the $badfilter modifier disable other basic rules to which they refer. It means that\nthe text of the disabled rule should match the text of the $badfilter rule (without the $badfilter modifier)." },
+  adg_cb_ios:{ name:"badfilter",
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#badfilter-modifier",
+    description:"The rules with the $badfilter modifier disable other basic rules to which they refer. It means that\nthe text of the disabled rule should match the text of the $badfilter rule (without the $badfilter modifier)." },
+  adg_cb_safari:{ name:"badfilter",
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#badfilter-modifier",
+    description:"The rules with the $badfilter modifier disable other basic rules to which they refer. It means that\nthe text of the disabled rule should match the text of the $badfilter rule (without the $badfilter modifier)." },
+  ubo_ext_any:{ name:"badfilter",
+    negatable:false,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#badfilter",
+    description:"The rules with the $badfilter modifier disable other basic rules to which they refer. It means that\nthe text of the disabled rule should match the text of the $badfilter rule (without the $badfilter modifier)." } };
+data$E.adg_os_any;
+data$E.adg_ext_any;
+data$E.adg_cb_ios;
+data$E.adg_cb_safari;
+data$E.ubo_ext_any;
+
+var data$D = { ubo_ext_any:{ name:"cname",
+    negatable:false,
+    exception_only:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#cname",
+    description:"When used in an exception filter,\nit will bypass blocking CNAME uncloaked requests for the current (specified) document." } };
+data$D.ubo_ext_any;
+
+var data$C = { adg_os_any:{ name:"content",
+    negatable:false,
+    exception_only:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#content-modifier",
+    description:"Disables HTML filtering and $replace rules on the pages that match the rule." } };
+data$C.adg_os_any;
+
+var data$B = { adg_os_any:{ name:"cookie",
+    description:"The $cookie modifier completely changes rule behavior.\nInstead of blocking a request, this modifier makes us suppress or modify the Cookie and Set-Cookie headers.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#cookie-modifier",
+    assignable:true,
+    value_format:"^([^;=\\s]*?)((?:;(maxAge=\\d+;?)?|(sameSite=(lax|none|strict);?)?){1,3})(?<!;)$",
+    negatable:false },
+  adg_ext_any:{ name:"cookie",
+    description:"The $cookie modifier completely changes rule behavior.\nInstead of blocking a request, this modifier makes us suppress or modify the Cookie and Set-Cookie headers.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#cookie-modifier",
+    assignable:true,
+    value_format:"^([^;=\\s]*?)((?:;(maxAge=\\d+;?)?|(sameSite=(lax|none|strict);?)?){1,3})(?<!;)$",
+    negatable:false } };
+data$B.adg_os_any;
+data$B.adg_ext_any;
+
+var data$A = { adg_os_any:{ name:"csp",
+    description:"This modifier completely changes the rule behavior.\nIf it is applied to a rule, it will not block the matching request.\nThe response headers are going to be modified instead.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#csp-modifier",
+    assignable:true,
+    value_format:"/[^,$]+/",
+    conflicts:[ "domain",
+      "important",
+      "subdocument",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false },
+  adg_ext_any:{ name:"csp",
+    description:"This modifier completely changes the rule behavior.\nIf it is applied to a rule, it will not block the matching request.\nThe response headers are going to be modified instead.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#csp-modifier",
+    assignable:true,
+    value_format:"/[^,$]+/",
+    conflicts:[ "domain",
+      "important",
+      "subdocument",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false },
+  abp_ext_any:{ name:"csp",
+    description:"This modifier completely changes the rule behavior.\nIf it is applied to a rule, it will not block the matching request.\nThe response headers are going to be modified instead.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#content-security-policies",
+    assignable:true,
+    value_format:"/[^,$]+/",
+    conflicts:[ "domain",
+      "subdocument" ],
+    inverse_conflicts:true,
+    negatable:false },
+  ubo_ext_any:{ name:"csp",
+    description:"This modifier completely changes the rule behavior.\nIf it is applied to a rule, it will not block the matching request.\nThe response headers are going to be modified instead.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#csp",
+    assignable:true,
+    value_format:"/[^,$]+/",
+    conflicts:[ "1p",
+      "3p",
+      "domain",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false } };
+data$A.adg_os_any;
+data$A.adg_ext_any;
+data$A.abp_ext_any;
+data$A.ubo_ext_any;
+
+var data$z = { adg_os_any:{ name:"denyallow",
+    description:"The $denyallow modifier allows to avoid creating additional rules\nwhen it is needed to disable a certain rule for specific domains.\n$denyallow matches only target domains and not referrer domains.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#denyallow-modifier",
+    conflicts:[ "to" ],
+    assignable:true,
+    value_format:"pipe_separated_domains",
+    negatable:false },
+  adg_ext_any:{ name:"denyallow",
+    description:"The $denyallow modifier allows to avoid creating additional rules\nwhen it is needed to disable a certain rule for specific domains.\n$denyallow matches only target domains and not referrer domains.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#denyallow-modifier",
+    conflicts:[ "to" ],
+    assignable:true,
+    value_format:"pipe_separated_domains" },
+  adg_cb_ios:{ name:"denyallow",
+    description:"The $denyallow modifier allows to avoid creating additional rules\nwhen it is needed to disable a certain rule for specific domains.\n$denyallow matches only target domains and not referrer domains.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#denyallow-modifier",
+    conflicts:[ "to" ],
+    assignable:true,
+    value_format:"pipe_separated_domains" },
+  adg_cb_safari:{ name:"denyallow",
+    description:"The $denyallow modifier allows to avoid creating additional rules\nwhen it is needed to disable a certain rule for specific domains.\n$denyallow matches only target domains and not referrer domains.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#denyallow-modifier",
+    conflicts:[ "to" ],
+    assignable:true,
+    value_format:"pipe_separated_domains" },
+  ubo_ext_any:{ name:"denyallow",
+    description:"The $denyallow modifier allows to avoid creating additional rules\nwhen it is needed to disable a certain rule for specific domains.\n$denyallow matches only target domains and not referrer domains.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#denyallow",
+    conflicts:[ "to" ],
+    assignable:true,
+    value_format:"pipe_separated_domains" } };
+data$z.adg_os_any;
+data$z.adg_ext_any;
+data$z.adg_cb_ios;
+data$z.adg_cb_safari;
+data$z.ubo_ext_any;
+
+var data$y = { adg_os_any:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#document-modifier",
+    negatable:false },
+  adg_ext_any:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#document-modifier",
+    negatable:false },
+  adg_cb_ios:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#document-modifier",
+    negatable:false },
+  adg_cb_safari:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#document-modifier",
+    negatable:false },
+  abp_ext_any:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#allowlist",
+    negatable:false },
+  ubo_ext_any:{ name:"document",
+    description:"The rule corresponds to the main frame document requests,\ni.e. HTML documents that are loaded in the browser tab.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#document",
+    aliases:[ "doc" ],
+    negatable:false } };
+data$y.adg_os_any;
+data$y.adg_ext_any;
+data$y.adg_cb_ios;
+data$y.adg_cb_safari;
+data$y.abp_ext_any;
+data$y.ubo_ext_any;
+
+var data$x = { adg_any:{ name:"domain",
+    aliases:[ "from" ],
+    assignable:true,
+    value_format:"pipe_separated_domains",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#domain-modifier",
+    description:"The $domain modifier limits the rule application area to a list of domains and their subdomains." },
+  abp_any:{ name:"domain",
+    assignable:true,
+    value_format:"pipe_separated_domains",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#domain-restrictions",
+    description:"The $domain modifier limits the rule application area to a list of domains and their subdomains." },
+  ubo_any:{ name:"domain",
+    aliases:[ "from" ],
+    assignable:true,
+    value_format:"pipe_separated_domains",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#from",
+    description:"The $domain modifier limits the rule application area to a list of domains and their subdomains." } };
+data$x.adg_any;
+data$x.abp_any;
+data$x.ubo_any;
+
+var data$w = { adg_any:{ name:"elemhide",
+    aliases:[ "ehide" ],
+    negatable:false,
+    exception_only:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#elemhide-modifier",
+    description:"Disables any cosmetic rules on the pages matching the rule." },
+  abp_any:{ name:"elemhide",
+    aliases:[ "ehide" ],
+    negatable:false,
+    exception_only:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"Disables any cosmetic rules on the pages matching the rule." },
+  ubo_any:{ name:"elemhide",
+    aliases:[ "ehide" ],
+    negatable:false,
+    exception_only:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#elemhide-1",
+    description:"Disables any cosmetic rules on the pages matching the rule." } };
+data$w.adg_any;
+data$w.abp_any;
+data$w.ubo_any;
+
+var data$v = { adg_os_any:{ name:"extension",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "genericblock",
+      "urlblock",
+      "jsinject",
+      "content",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    exception_only:true,
+    version_added:"0.0.1",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#extension-modifier",
+    description:"Disables all userscripts on the pages matching this rule." } };
+data$v.adg_os_any;
+
+var data$u = { adg_any:{ name:"font",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#font-modifier",
+    description:"The rule corresponds to requests for fonts, e.g. .woff filename extension." },
+  abp_any:{ name:"font",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"The rule corresponds to requests for fonts, e.g. .woff filename extension." },
+  ubo_any:{ name:"font",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"The rule corresponds to requests for fonts, e.g. .woff filename extension." } };
+data$u.adg_any;
+data$u.abp_any;
+data$u.ubo_any;
+
+var data$t = { adg_os_any:{ name:"genericblock",
+    description:"Disables generic basic rules on pages that correspond to exception rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#genericblock-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "extension",
+      "jsinject",
+      "content",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_any:{ name:"genericblock",
+    description:"Disables generic basic rules on pages that correspond to exception rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#genericblock-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "jsinject",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_cb_ios:{ name:"genericblock",
+    description:"Disables generic basic rules on pages that correspond to exception rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#genericblock-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "jsinject",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_cb_safari:{ name:"genericblock",
+    description:"Disables generic basic rules on pages that correspond to exception rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#genericblock-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "jsinject",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  abp_ext_any:{ name:"genericblock",
+    description:"Disables generic basic rules on pages that correspond to exception rule.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    negatable:false,
+    exception_only:true } };
+data$t.adg_os_any;
+data$t.adg_ext_any;
+data$t.adg_cb_ios;
+data$t.adg_cb_safari;
+data$t.abp_ext_any;
+
+var data$s = { adg_any:{ name:"generichide",
+    aliases:[ "ghide" ],
+    conflicts:[ "domain",
+      "genericblock",
+      "urlblock",
+      "extension",
+      "jsinject",
+      "content",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true,
+    version_added:"0.0.1",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#generichide-modifier",
+    description:"Disables all generic cosmetic rules." },
+  ubo_any:{ name:"generichide",
+    aliases:[ "ghide" ],
+    conflicts:[ "domain",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true,
+    version_added:"0.0.1",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#generichide",
+    description:"Disables all generic cosmetic rules." },
+  abp_any:{ name:"generichide",
+    conflicts:[ "domain" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true,
+    version_added:"0.0.1",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"Disables all generic cosmetic rules." } };
+data$s.adg_any;
+data$s.ubo_any;
+data$s.abp_any;
+
+var data$r = { adg_os_any:{ name:"header",
+    description:"The $header modifier allows matching the HTTP response\nhaving a specific header with (optionally) a specific value.",
+    assignable:true,
+    value_format:"/^[A-z0-9-]+(:.+|)$/",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#header-modifier" },
+  adg_ext_any:{ name:"header",
+    description:"The $header modifier allows matching the HTTP response\nhaving a specific header with (optionally) a specific value.",
+    assignable:true,
+    value_format:"/^[A-z0-9-]+(:.+|)$/",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#header-modifier" },
+  ubo_ext_any:{ name:"header",
+    description:"The $header modifier allows matching the HTTP response\nhaving a specific header with (optionally) a specific value.",
+    assignable:true,
+    value_format:"/^[A-z0-9-]+(:.+|)$/",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#header" } };
+data$r.adg_os_any;
+data$r.adg_ext_any;
+data$r.ubo_ext_any;
+
+var data$q = { adg_os_any:{ name:"hls",
+    description:"The $hls rules modify the response of a matching request.\nThey are intended as a convenient way to remove segments from HLS playlists (RFC 8216).",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#hls-modifier",
+    version_added:"CoreLibs 1.10",
+    conflicts:[ "domain",
+      "third-party",
+      "app",
+      "important",
+      "match-case",
+      "xmlhttprequest" ],
+    inverse_conflicts:true,
+    assignable:true,
+    negatable:false } };
+data$q.adg_os_any;
+
+var data$p = { adg_any:{ name:"image",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#image-modifier",
+    description:"The rule corresponds to images requests." },
+  abp_any:{ name:"image",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"The rule corresponds to images requests." },
+  ubo_any:{ name:"image",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"The rule corresponds to images requests." } };
+data$p.adg_any;
+data$p.abp_any;
+data$p.ubo_any;
+
+var data$o = { adg_any:{ name:"important",
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#important-modifier",
+    description:"The $important modifier applied to a rule increases its priority\nover any other rule without $important modifier. Even over basic exception rules." },
+  ubo_any:{ name:"important",
+    negatable:false,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#important",
+    description:"The $important modifier applied to a rule increases its priority\nover any other rule without $important modifier. Even over basic exception rules." } };
+data$o.adg_any;
+data$o.ubo_any;
+
+var data$n = { adg_os_any:{ name:"inline-font",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#inline-font-modifier",
+    description:"The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.\nE.g. '||example.org^$inline-font' is converting into:\n```\n||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:\n```" },
+  adg_ext_any:{ name:"inline-font",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#inline-font-modifier",
+    description:"The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.\nE.g. '||example.org^$inline-font' is converting into:\n```\n||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:\n```" },
+  ubo_ext_any:{ name:"inline-font",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#inline-font",
+    description:"The $inline-font modifier is a sort of a shortcut for $csp modifier with specific value.\nE.g. '||example.org^$inline-font' is converting into:\n```\n||example.org^$csp=font-src 'self' 'unsafe-eval' http: https: data: blob: mediastream: filesystem:\n```" } };
+data$n.adg_os_any;
+data$n.adg_ext_any;
+data$n.ubo_ext_any;
+
+var data$m = { adg_os_any:{ name:"jsinject",
+    description:"Forbids adding of javascript code to the page.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#jsinject-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "genericblock",
+      "urlblock",
+      "extension",
+      "content",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_any:{ name:"jsinject",
+    description:"Forbids adding of javascript code to the page.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#jsinject-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "genericblock",
+      "urlblock",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_cb_ios:{ name:"jsinject",
+    description:"Forbids adding of javascript code to the page.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#jsinject-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "genericblock",
+      "urlblock",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true },
+  adg_cb_safari:{ name:"jsinject",
+    description:"Forbids adding of javascript code to the page.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#jsinject-modifier",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "genericblock",
+      "urlblock",
+      "xmlhttprequest",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true } };
+data$m.adg_os_any;
+data$m.adg_ext_any;
+data$m.adg_cb_ios;
+data$m.adg_cb_safari;
+
+var data$l = { adg_os_any:{ name:"jsonprune",
+    assignable:true,
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#jsonprune-modifier",
+    description:"$jsonprune rules modify the response to a matching request\nby removing JSON items that match a modified JSONPath expression.\nThey do not modify responses which are not valid JSON documents." } };
+data$l.adg_os_any;
+
+var data$k = { adg_any:{ name:"match-case",
+    description:"This modifier defines a rule which applies only to addresses that match the case.\nDefault rules are case-insensitive.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#match-case-modifier" },
+  abp_any:{ name:"match-case",
+    description:"This modifier defines a rule which applies only to addresses that match the case.\nDefault rules are case-insensitive.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_any:{ name:"match-case",
+    description:"This modifier defines a rule which applies only to addresses that match the case.\nDefault rules are case-insensitive.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#match-case" } };
+data$k.adg_any;
+data$k.abp_any;
+data$k.ubo_any;
+
+var data$j = { adg_any:{ name:"media",
+    negatable:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#media-modifier",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." },
+  abp_any:{ name:"media",
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." },
+  ubo_any:{ name:"media",
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." } };
+data$j.adg_any;
+data$j.abp_any;
+data$j.ubo_any;
+
+var data$i = { adg_any:{ name:"object",
+    description:"The rule corresponds to browser plugins resources, e.g. Java or Flash",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#object-modifier" },
+  abp_any:{ name:"object",
+    description:"The rule corresponds to browser plugins resources, e.g. Java or Flash.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_any:{ name:"object",
+    description:"The rule corresponds to browser plugins resources, e.g. Java or Flash.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" } };
+data$i.adg_any;
+data$i.abp_any;
+data$i.ubo_any;
+
+var data$h = { adg_any:{ name:"other",
+    description:"The rule applies to requests for which the type has not been determined\nor does not match the types listed above.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#other-modifier" },
+  abp_any:{ name:"other",
+    description:"The rule applies to requests for which the type has not been determined\nor does not match the types listed above.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_any:{ name:"other",
+    description:"The rule applies to requests for which the type has not been determined\nor does not match the types listed above.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" } };
+data$h.adg_any;
+data$h.abp_any;
+data$h.ubo_any;
+
+var data$g = { adg_any:{ name:"ping",
+    description:"The rule corresponds to requests caused by either navigator.sendBeacon() or the ping attribute on links.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#ping-modifier" },
+  abp_any:{ name:"ping",
+    description:"The rule corresponds to requests caused by either navigator.sendBeacon() or the ping attribute on links.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_any:{ name:"ping",
+    description:"The rule corresponds to requests caused by either navigator.sendBeacon() or the ping attribute on links.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" } };
+data$g.adg_any;
+data$g.abp_any;
+data$g.ubo_any;
+
+var data$f = { ubo_ext_any:{ name:"popunder",
+    negatable:false,
+    block_only:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#popunder",
+    description:"To block \"popunders\" windows/tabs where the original page redirects to an advertisement\nand the desired content loads in the newly created one.\nTo be used in the same manner as the popup filter option, except that it will block popunders." } };
+data$f.ubo_ext_any;
+
+var data$e = { adg_any:{ name:"popup",
+    description:"Pages opened in a new tab or window.\nNote: Filters will not block pop-ups by default, only if the $popup type option is specified.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#popup-modifier" },
+  abp_any:{ name:"popup",
+    description:"Pages opened in a new tab or window.\nNote: Filters will not block pop-ups by default, only if the $popup type option is specified.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_any:{ name:"popup",
+    description:"Pages opened in a new tab or window.\nNote: Filters will not block pop-ups by default, only if the $popup type option is specified.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" } };
+data$e.adg_any;
+data$e.abp_any;
+data$e.ubo_any;
+
+var data$d = { adg_os_any:{ name:"redirect-rule",
+    inverse_conflicts:true,
+    conflicts:[ "domain",
+      "to",
+      "third-party",
+      "popup",
+      "match-case",
+      "header",
+      "first-party",
+      "document",
+      "image",
+      "stylesheet",
+      "script",
+      "object",
+      "font",
+      "media",
+      "subdocument",
+      "ping",
+      "xmlhttprequest",
+      "websocket",
+      "other",
+      "webrtc",
+      "important",
+      "badfilter",
+      "app" ],
+    value_format:"(?x)\n  ^(\n    1x1-transparent\\.gif|\n    2x2-transparent\\.png|\n    3x2-transparent\\.png|\n    32x32-transparent\\.png|\n    noopframe|\n    noopcss|\n    noopjs|\n    noopjson|\n    nooptext|\n    empty|\n    noopvmap-1\\.0|\n    noopvast-2\\.0|\n    noopvast-3\\.0|\n    noopvast-4\\.0|\n    noopmp3-0\\.1s|\n    noopmp4-1s|\n    amazon-apstag|\n    ati-smarttag|\n    didomi-loader|\n    fingerprintjs2|\n    fingerprintjs3|\n    gemius|\n    google-analytics-ga|\n    google-analytics|\n    google-ima3|\n    googlesyndication-adsbygoogle|\n    googletagservices-gpt|\n    matomo|\n    metrika-yandex-tag|\n    metrika-yandex-watch|\n    naver-wcslog|\n    noeval|\n    pardot-1\\.0|\n    prebid-ads|\n    prebid|\n    prevent-bab|\n    prevent-bab2|\n    prevent-fab-3\\.2\\.0|\n    prevent-popads-net|\n    scorecardresearch-beacon|\n    set-popads-dummy|\n    click2load\\.html|\n  )?$",
+    description:"This is basically an alias to $redirect\nsince it has the same \"redirection\" values and the logic is almost similar.\nThe difference is that $redirect-rule is applied only in the case\nwhen the target request is blocked by a different basic rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#redirect-rule-modifier" },
+  adg_ext_any:{ name:"redirect-rule",
+    inverse_conflicts:true,
+    conflicts:[ "domain",
+      "to",
+      "third-party",
+      "popup",
+      "match-case",
+      "header",
+      "first-party",
+      "document",
+      "image",
+      "stylesheet",
+      "script",
+      "object",
+      "font",
+      "media",
+      "subdocument",
+      "ping",
+      "xmlhttprequest",
+      "websocket",
+      "other",
+      "webrtc",
+      "important",
+      "badfilter" ],
+    value_format:"(?x)\n  ^(\n    1x1-transparent\\.gif|\n    2x2-transparent\\.png|\n    3x2-transparent\\.png|\n    32x32-transparent\\.png|\n    noopframe|\n    noopcss|\n    noopjs|\n    noopjson|\n    nooptext|\n    empty|\n    noopvmap-1\\.0|\n    noopvast-2\\.0|\n    noopvast-3\\.0|\n    noopvast-4\\.0|\n    noopmp3-0\\.1s|\n    noopmp4-1s|\n    amazon-apstag|\n    ati-smarttag|\n    didomi-loader|\n    fingerprintjs2|\n    fingerprintjs3|\n    gemius|\n    google-analytics-ga|\n    google-analytics|\n    google-ima3|\n    googlesyndication-adsbygoogle|\n    googletagservices-gpt|\n    matomo|\n    metrika-yandex-tag|\n    metrika-yandex-watch|\n    naver-wcslog|\n    noeval|\n    pardot-1\\.0|\n    prebid-ads|\n    prebid|\n    prevent-bab|\n    prevent-bab2|\n    prevent-fab-3\\.2\\.0|\n    prevent-popads-net|\n    scorecardresearch-beacon|\n    set-popads-dummy|\n    click2load\\.html|\n  )?$",
+    description:"This is basically an alias to $redirect\nsince it has the same \"redirection\" values and the logic is almost similar.\nThe difference is that $redirect-rule is applied only in the case\nwhen the target request is blocked by a different basic rule.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#redirect-rule-modifier" },
+  ubo_ext_any:{ name:"redirect-rule",
+    inverse_conflicts:true,
+    conflicts:[ "domain",
+      "to",
+      "third-party",
+      "popup",
+      "match-case",
+      "header",
+      "first-party",
+      "document",
+      "image",
+      "stylesheet",
+      "script",
+      "object",
+      "font",
+      "media",
+      "subdocument",
+      "ping",
+      "xmlhttprequest",
+      "websocket",
+      "other",
+      "webrtc",
+      "important",
+      "badfilter" ],
+    value_format:"(?x)\n  ^(\n    1x1\\.gif|\n    2x2\\.png|\n    3x2\\.png|\n    32x32\\.png|\n    noop\\.css|\n    noop\\.html|\n    noopframe|\n    noop\\.js|\n    noop\\.txt|\n    noop-0\\.1s\\.mp3|\n    noop-0\\.5s\\.mp3|\n    noop-1s\\.mp4|\n    none|\n    click2load\\.html|\n    addthis_widget\\.js|\n    amazon_ads\\.js|\n    amazon_apstag\\.js|\n    monkeybroker\\.js|\n    doubleclick_instream_ad_status|\n    google-analytics_ga\\.js|\n    google-analytics_analytics\\.js|\n    google-analytics_inpage_linkid\\.js|\n    google-analytics_cx_api\\.js|\n    google-ima\\.js|\n    googletagservices_gpt\\.js|\n    googletagmanager_gtm\\.js|\n    googlesyndication_adsbygoogle\\.js|\n    scorecardresearch_beacon\\.js|\n    outbrain-widget\\.js|\n    hd-main\\.js\n  )\n  (:[0-9]+)?$",
+    description:"This is basically an alias to $redirect\nsince it has the same \"redirection\" values and the logic is almost similar.\nThe difference is that $redirect-rule is applied only in the case\nwhen the target request is blocked by a different basic rule.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#redirect-rule" } };
+data$d.adg_os_any;
+data$d.adg_ext_any;
+data$d.ubo_ext_any;
+
+var data$c = { adg_os_any:{ name:"removeheader",
+    conflicts:[ "domain",
+      "third-party",
+      "first-party",
+      "app",
+      "important",
+      "match-case",
+      "document",
+      "image",
+      "stylesheet",
+      "script",
+      "object",
+      "font",
+      "media",
+      "subdocument",
+      "ping",
+      "xmlhttpreqeust",
+      "websocket",
+      "other",
+      "webrtc" ],
+    value_format:"(?xi)\n  ^\n    # Value may start with \"request:\"\n    (request:)?\n\n    # Forbidden header names\n    (?!\n      (\n        access-control-allow-origin|\n        access-control-allow-credentials|\n        access-control-allow-headers|\n        access-control-allow-methods|\n        access-control-expose-headers|\n        access-control-max-age|\n        access-control-request-headers|\n        access-control-request-method|\n        origin|\n        timing-allow-origin|\n        allow|\n        cross-origin-embedder-policy|\n        cross-origin-opener-policy|\n        cross-origin-resource-policy|\n        content-security-policy|\n        content-security-policy-report-only|\n        expect-ct|\n        feature-policy|\n        origin-isolation|\n        strict-transport-security|\n        upgrade-insecure-requests|\n        x-content-type-options|\n        x-download-options|\n        x-frame-options|\n        x-permitted-cross-domain-policies|\n        x-powered-by|\n        x-xss-protection|\n        public-key-pins|\n        public-key-pins-report-only|\n        sec-websocket-key|\n        sec-websocket-extensions|\n        sec-websocket-accept|\n        sec-websocket-protocol|\n        sec-websocket-version|\n        p3p|\n        sec-fetch-mode|\n        sec-fetch-dest|\n        sec-fetch-site|\n        sec-fetch-user|\n        referrer-policy|\n        content-type|\n        content-length|\n        accept|\n        accept-encoding|\n        host|\n        connection|\n        transfer-encoding|\n        upgrade\n      )\n    $)\n\n    # Any other header name is allowed, if it matches the following regex\n    [A-z0-9-]+\n  $",
+    inverse_conflicts:true,
+    assignable:true,
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#removeheader-modifier",
+    description:"Rules with $removeheader modifier are intended to remove headers from HTTP requests and responses." },
+  adg_ext_any:{ name:"removeheader",
+    conflicts:[ "domain",
+      "third-party",
+      "first-party",
+      "app",
+      "important",
+      "match-case",
+      "document",
+      "image",
+      "stylesheet",
+      "script",
+      "object",
+      "font",
+      "media",
+      "subdocument",
+      "ping",
+      "xmlhttpreqeust",
+      "websocket",
+      "other",
+      "webrtc" ],
+    value_format:"(?xi)\n  ^\n    # Value may start with \"request:\"\n    (request:)?\n\n    # Forbidden header names\n    (?!\n      (\n        access-control-allow-origin|\n        access-control-allow-credentials|\n        access-control-allow-headers|\n        access-control-allow-methods|\n        access-control-expose-headers|\n        access-control-max-age|\n        access-control-request-headers|\n        access-control-request-method|\n        origin|\n        timing-allow-origin|\n        allow|\n        cross-origin-embedder-policy|\n        cross-origin-opener-policy|\n        cross-origin-resource-policy|\n        content-security-policy|\n        content-security-policy-report-only|\n        expect-ct|\n        feature-policy|\n        origin-isolation|\n        strict-transport-security|\n        upgrade-insecure-requests|\n        x-content-type-options|\n        x-download-options|\n        x-frame-options|\n        x-permitted-cross-domain-policies|\n        x-powered-by|\n        x-xss-protection|\n        public-key-pins|\n        public-key-pins-report-only|\n        sec-websocket-key|\n        sec-websocket-extensions|\n        sec-websocket-accept|\n        sec-websocket-protocol|\n        sec-websocket-version|\n        p3p|\n        sec-fetch-mode|\n        sec-fetch-dest|\n        sec-fetch-site|\n        sec-fetch-user|\n        referrer-policy|\n        content-type|\n        content-length|\n        accept|\n        accept-encoding|\n        host|\n        connection|\n        transfer-encoding|\n        upgrade\n      )\n    $)\n\n    # Any other header name is allowed, if it matches the following regex\n    [A-z0-9-]+\n  $",
+    inverse_conflicts:true,
+    assignable:true,
+    negatable:false,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#removeheader-modifier",
+    description:"Rules with $removeheader modifier are intended to remove headers from HTTP requests and responses." } };
+data$c.adg_os_any;
+data$c.adg_ext_any;
+
+var data$b = { adg_any:{ name:"script",
+    assignable:false,
+    negatable:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#script-modifier",
+    description:"The rule corresponds to script requests, e.g. javascript, vbscript." },
+  abp_any:{ name:"script",
+    assignable:false,
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"The rule corresponds to script requests, e.g. javascript, vbscript." },
+  ubo_any:{ name:"script",
+    assignable:false,
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#options",
+    description:"The rule corresponds to script requests, e.g. javascript, vbscript." } };
+data$b.adg_any;
+data$b.abp_any;
+data$b.ubo_any;
+
+var data$a = { adg_os_any:{ name:"stealth",
+    description:"Disables the Stealth Mode module for all corresponding pages and requests.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stealth-modifier",
+    assignable:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_chrome:{ name:"stealth",
+    description:"Disables the Stealth Mode module for all corresponding pages and requests.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stealth-modifier",
+    assignable:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_firefox:{ name:"stealth",
+    description:"Disables the Stealth Mode module for all corresponding pages and requests.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stealth-modifier",
+    assignable:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_opera:{ name:"stealth",
+    description:"Disables the Stealth Mode module for all corresponding pages and requests.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stealth-modifier",
+    assignable:true,
+    negatable:false,
+    exception_only:true },
+  adg_ext_edge:{ name:"stealth",
+    description:"Disables the Stealth Mode module for all corresponding pages and requests.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stealth-modifier",
+    assignable:true,
+    negatable:false,
+    exception_only:true } };
+data$a.adg_os_any;
+data$a.adg_ext_chrome;
+data$a.adg_ext_firefox;
+data$a.adg_ext_opera;
+data$a.adg_ext_edge;
+
+var data$9 = { ubo_any:{ name:"strict1p",
+    description:"This new strict1p option can check for strict partyness.\nFor example, a network request qualifies as 1st-party if both the context and the request share the same hostname.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#strict1p" } };
+data$9.ubo_any;
+
+var data$8 = { ubo_any:{ name:"strict3p",
+    description:"This new strict3p option can check for strict partyness.\nFor example, a network request qualifies as 3rd-party if the context and the request hostnames are different.",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#strict3p" } };
+data$8.ubo_any;
+
+var data$7 = { adg_any:{ name:"stylesheet",
+    assignable:false,
+    negatable:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#stylesheet-modifier",
+    description:"The rule corresponds to CSS files requests." },
+  abp_any:{ name:"stylesheet",
+    assignable:false,
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"The rule corresponds to CSS files requests." },
+  ubo_any:{ name:"stylesheet",
+    aliases:[ "css" ],
+    assignable:false,
+    negatable:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#css",
+    description:"The rule corresponds to CSS files requests." } };
+data$7.adg_any;
+data$7.abp_any;
+data$7.ubo_any;
+
+var data$6 = { adg_any:{ name:"subdocument",
+    assignable:false,
+    negatable:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#subdocument-modifier",
+    description:"The rule corresponds to requests for built-in pages — HTML tags frame and iframe." },
+  abp_any:{ name:"subdocument",
+    assignable:false,
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"The rule corresponds to requests for built-in pages — HTML tags frame and iframe." },
+  ubo_any:{ name:"subdocument",
+    aliases:[ "frame" ],
+    assignable:false,
+    negatable:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#frame",
+    description:"The rule corresponds to requests for built-in pages — HTML tags frame and iframe." } };
+data$6.adg_any;
+data$6.abp_any;
+data$6.ubo_any;
+
+var data$5 = { adg_any:{ name:"third-party",
+    aliases:[ "3p" ],
+    assignable:false,
+    negatable:true,
+    version_added:"0.0.1",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#third-party-modifier",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." },
+  ubo_any:{ name:"3p",
+    aliases:[ "third-party" ],
+    assignable:false,
+    negatable:true,
+    version_added:"0.0.1",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#3p",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." },
+  abp_any:{ name:"third-party",
+    assignable:false,
+    negatable:true,
+    version_added:"0.0.1",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293#party-requests",
+    description:"A restriction of third-party and own requests.\nA third-party request is a request from a different domain.\nFor example, a request to example.org, from domain.com is a third-party request." } };
+data$5.adg_any;
+data$5.ubo_any;
+data$5.abp_any;
+
+var data$4 = { ubo_ext_any:{ name:"to",
+    assignable:true,
+    negatable:false,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#to",
+    description:"The main motivation of this option is\nto give static network filtering engine an equivalent of DNR's requestDomains and excludedRequestDomains." } };
+data$4.ubo_ext_any;
+
+var data$3 = { adg_any:{ name:"urlblock",
+    conflicts:[ "domain",
+      "specifichide",
+      "generichide",
+      "elemhide",
+      "extension",
+      "jsinject",
+      "content",
+      "badfilter" ],
+    inverse_conflicts:true,
+    negatable:false,
+    exception_only:true,
+    version_added:"0.0.1",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#urlblock-modifier",
+    description:"Disables blocking of all requests sent from the pages matching the rule." } };
+data$3.adg_any;
+
+var data$2 = { adg_any:{ name:"webrtc",
+    deprecated:true,
+    deprecation_message:"This modifier is deprecated and is no longer supported.\nRules with it are considered as invalid. If you need to suppress WebRTC, consider using\nthe [nowebrtc scriptlet](https://github.com/AdguardTeam/Scriptlets/blob/master/wiki/about-scriptlets.md#nowebrtc).",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#webrtc-modifier" },
+  ubo_any:{ name:"webrtc",
+    deprecated:true,
+    deprecation_message:"This modifier is deprecated and is no longer supported.\nIf you need to suppress WebRTC, consider using\nthe [nowebrtc scriptlet](https://github.com/gorhill/uBlock/wiki/Resources-Library#nowebrtcjs-).",
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax" },
+  abp_any:{ name:"webrtc",
+    version_added:"1.13.3",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"The rule applies only to WebRTC connections." } };
+data$2.adg_any;
+data$2.ubo_any;
+data$2.abp_any;
+
+var data$1 = { adg_os_any:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#websocket-modifier" },
+  adg_ext_any:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#websocket-modifier" },
+  adg_cb_ios:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#websocket-modifier" },
+  adg_cb_safari:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#websocket-modifier" },
+  abp_ext_any:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" },
+  ubo_ext_any:{ name:"websocket",
+    description:"The rule applies only to WebSocket connections.",
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options" } };
+data$1.adg_os_any;
+data$1.adg_ext_any;
+data$1.adg_cb_ios;
+data$1.adg_cb_safari;
+data$1.abp_ext_any;
+data$1.ubo_ext_any;
+
+var data = { adg_any:{ name:"xmlhttprequest",
+    aliases:[ "xhr" ],
+    assignable:false,
+    negatable:true,
+    docs:"https://adguard.com/kb/general/ad-filtering/create-own-filters/#xmlhttprequest-modifier",
+    description:"The rule applies only to ajax requests (requests sent via javascript object XMLHttpRequest)." },
+  abp_any:{ name:"xmlhttprequest",
+    assignable:false,
+    negatable:true,
+    docs:"https://help.adblockplus.org/hc/en-us/articles/360062733293-How-to-write-filters#type-options",
+    description:"The rule applies only to ajax requests (requests sent via javascript object XMLHttpRequest)." },
+  ubo_any:{ name:"xhr",
+    aliases:[ "xmlhttprequest" ],
+    assignable:false,
+    negatable:true,
+    docs:"https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#xhr",
+    description:"The rule applies only to ajax requests (requests sent via javascript object XMLHttpRequest)." } };
+data.adg_any;
+data.abp_any;
+data.ubo_any;
+
+/**
+ * @file Raw compatibility tables data reexport from yaml files.
+ *
+ * '@ts-nocheck' is used here once instead of adding @ts-ignore for each import.
+ */
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
+const rawModifiersData = {
+    app: data$F,
+    badfilter: data$E,
+    cname: data$D,
+    content: data$C,
+    cookie: data$B,
+    csp: data$A,
+    denyallow: data$z,
+    document: data$y,
+    domain: data$x,
+    elemhide: data$w,
+    extension: data$v,
+    font: data$u,
+    genericblock: data$t,
+    generichide: data$s,
+    header: data$r,
+    hls: data$q,
+    image: data$p,
+    important: data$o,
+    inlineFont: data$n,
+    jsinject: data$m,
+    jsonprune: data$l,
+    matchcase: data$k,
+    media: data$j,
+    object: data$i,
+    other: data$h,
+    ping: data$g,
+    popunder: data$f,
+    popup: data$e,
+    redirectRule: data$d,
+    removeheader: data$c,
+    script: data$b,
+    stealth: data$a,
+    strict1p: data$9,
+    strict3p: data$8,
+    stylesheet: data$7,
+    subdocument: data$6,
+    thirdParty: data$5,
+    to: data$4,
+    urlblock: data$3,
+    webrtc: data$2,
+    websocket: data$1,
+    xmlhttprequest: data,
+};
+
+/**
+ * Checks whether the given value is defined.
+ *
+ * @param value Value to check.
+ *
+ * @returns True if the value type is not 'undefined'.
+ */
+const isUndefined = (value) => {
+    return typeof value === 'undefined';
+};
+
+/**
+ * @file Validator for modifiers.
+ */
+/**
+ * Prepares raw modifiers data into a data map.
+ *
+ * @returns Map of parsed modifiers data.
+ */
+const getModifiersData = () => {
+    const dataMap = new Map();
+    Object.keys(rawModifiersData).forEach((modifierId) => {
+        const modifierData = rawModifiersData[modifierId];
+        dataMap.set(modifierId, modifierData);
+    });
+    return dataMap;
+};
+/**
+ * Collects names and aliases for all supported modifiers.
+ * Deprecated modifiers are not included.
+ *
+ * @param dataMap Parsed all modifiers data.
+ *
+ * @returns Set of supported modifier names (and their aliases).
+ */
+const getAllSupportedModifierNames = (dataMap) => {
+    const names = new Set();
+    dataMap.forEach((modifierData) => {
+        Object.keys(modifierData).forEach((blockerId) => {
+            const blockerData = modifierData[blockerId];
+            // do not include deprecated modifiers
+            if (blockerData.deprecated) {
+                return;
+            }
+            names.add(blockerData.name);
+            if (isUndefined(blockerData.aliases)) {
+                return;
+            }
+            blockerData.aliases.forEach((alias) => names.add(alias));
+        });
+    });
+    return names;
+};
+/**
+ * Modifier validator class.
+ */
+class ModifierValidator {
+    /**
+     * Map of all modifiers data parsed from yaml files.
+     */
+    modifiersData;
+    /**
+     * List of all currently supported modifier names for any adblocker.
+     * Deprecated modifiers are not included.
+     */
+    supportedModifierNames;
+    constructor() {
+        // data map based on yaml files
+        this.modifiersData = getModifiersData();
+        this.supportedModifierNames = getAllSupportedModifierNames(this.modifiersData);
+    }
+    /**
+     * Simply checks whether the modifier exists in any adblocker.
+     *
+     * @param rawModifier Modifier as string OR already parsed modifier AST node.
+     *
+     * @returns True if modifier exists, false otherwise.
+     * If given modifier is a string and it cannot be parsed as a valid modifier,
+     * e.g. 'domain=', false is returned.
+     */
+    exists = (rawModifier) => {
+        let modifier;
+        if (StringUtils.isString(rawModifier)) {
+            try {
+                modifier = ModifierParser.parse(rawModifier);
+            }
+            catch (e) {
+                return false;
+            }
+        }
+        else {
+            modifier = rawModifier;
+        }
+        return this.supportedModifierNames.has(modifier.modifier.value);
+    };
+}
+
 /**
  * @file Base class for rule converters
  */
@@ -5522,6 +6747,7 @@ exports.MODIFIER_EXCEPTION_MARKER = MODIFIER_EXCEPTION_MARKER;
 exports.MetadataCommentRuleParser = MetadataCommentRuleParser;
 exports.ModifierListParser = ModifierListParser;
 exports.ModifierParser = ModifierParser;
+exports.ModifierValidator = ModifierValidator;
 exports.NETWORK_RULE_EXCEPTION_MARKER = NETWORK_RULE_EXCEPTION_MARKER;
 exports.NETWORK_RULE_SEPARATOR = NETWORK_RULE_SEPARATOR;
 exports.NetworkRuleParser = NetworkRuleParser;

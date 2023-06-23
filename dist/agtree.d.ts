@@ -1,10 +1,10 @@
 /*
- * AGTree v1.0.1 (build date: Thu, 22 Jun 2023 07:48:36 GMT)
+ * AGTree v1.0.1 (build date: Fri, 23 Jun 2023 15:20:07 GMT)
  * (c) 2023 AdGuard Software Ltd.
  * Released under the MIT license
  * https://github.com/AdguardTeam/tsurlfilter/tree/master/packages/agtree#readme
  */
-import { MediaQueryListPlain, SelectorListPlain, DeclarationListPlain, FunctionNodePlain, CssNode, CssNodePlain, SelectorList, Block, BlockPlain, MediaQueryList, MediaQuery, Selector, DeclarationList, AttributeSelector, PseudoClassSelectorPlain } from '@adguard/ecss-tree';
+import { MediaQueryListPlain, SelectorListPlain, DeclarationListPlain, FunctionNodePlain, CssNode, CssNodePlain, SelectorList, DeclarationList, MediaQueryList, MediaQuery, Selector, AttributeSelector, PseudoClassSelectorPlain } from '@adguard/ecss-tree';
 import * as ecssTree from '@adguard/ecss-tree';
 export { ecssTree as ECSSTree };
 
@@ -185,7 +185,80 @@ declare enum CosmeticRuleType {
 /**
  * Represents possible cosmetic rule separators.
  */
-type CosmeticRuleSeparator = '##' | '#@#' | '#?#' | '#@?#' | '#$#' | '#@$#' | '#$?#' | '#@$?#' | '##+' | '#@#+' | '#%#' | '#@%#' | '##^' | '#@#^' | '$$' | '$@$';
+declare enum CosmeticRuleSeparator {
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    ElementHiding = "##",
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    ElementHidingException = "#@#",
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    ExtendedElementHiding = "#?#",
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    ExtendedElementHidingException = "#@?#",
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    AbpSnippet = "#$#",
+    /**
+     * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_basic}
+     */
+    AbpSnippetException = "#@$#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    AdgCssInjection = "#$#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    AdgCssInjectionException = "#@$#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    AdgExtendedCssInjection = "#$?#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#cosmetic-css-rules}
+     */
+    AdgExtendedCssInjectionException = "#@$?#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#scriptlets}
+     */
+    AdgJsInjection = "#%#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#scriptlets}
+     */
+    AdgJsInjectionException = "#@%#",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#html-filtering-rules}
+     */
+    AdgHtmlFiltering = "$$",
+    /**
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#html-filtering-rules}
+     */
+    AdgHtmlFilteringException = "$@$",
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#scriptlet-injection}
+     */
+    UboScriptletInjection = "##+",
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#scriptlet-injection}
+     */
+    UboScriptletInjectionException = "#@#+",
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#html-filters}
+     */
+    UboHtmlFiltering = "##^",
+    /**
+     * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#html-filters}
+     */
+    UboHtmlFilteringException = "#@#^"
+}
 /**
  * Represents a basic node in the AST.
  */
@@ -1022,6 +1095,28 @@ declare class RuleParser {
 }
 
 /**
+ * @file Customized syntax error class for Adblock Filter Parser.
+ */
+
+/**
+ * Customized syntax error class for Adblock Filter Parser,
+ * which contains the location range of the error.
+ */
+declare class AdblockSyntaxError extends SyntaxError {
+    /**
+     * Location range of the error.
+     */
+    loc: LocationRange;
+    /**
+     * Constructs a new `AdblockSyntaxError` instance.
+     *
+     * @param message Error message
+     * @param loc Location range of the error
+     */
+    constructor(message: string, loc: LocationRange);
+}
+
+/**
  * `AgentParser` is responsible for parsing an Adblock agent rules.
  * Adblock agent comment marks that the filter list is supposed to
  * be used by the specified ad blockers.
@@ -1104,201 +1199,6 @@ declare class AgentParser {
      * @returns Raw string
      */
     static generate(ast: Agent): string;
-}
-
-/**
- * @file AdGuard Hints
- * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints}
- */
-
-/**
- * `HintParser` is responsible for parsing AdGuard hints.
- *
- * @example
- * If the hint rule is
- * ```adblock
- * !+ NOT_OPTIMIZED PLATFORM(windows)
- * ```
- * then the hints are `NOT_OPTIMIZED` and `PLATFORM(windows)`, and this
- * class is responsible for parsing them. The rule itself is parsed by
- * the `HintRuleParser`, which uses this class to parse single hints.
- */
-declare class HintParser {
-    /**
-     * Parses a raw rule as a hint.
-     *
-     * @param raw Raw rule
-     * @param loc Base location
-     * @returns Hint rule AST or null
-     * @throws If the syntax is invalid
-     */
-    static parse(raw: string, loc?: Location): Hint;
-    /**
-     * Converts a single hint AST to a string.
-     *
-     * @param hint Hint AST
-     * @returns Hint string
-     */
-    static generate(hint: Hint): string;
-}
-
-/**
- * `HintRuleParser` is responsible for parsing AdGuard hint rules.
- *
- * @example
- * The following hint rule
- * ```adblock
- * !+ NOT_OPTIMIZED PLATFORM(windows)
- * ```
- * contains two hints: `NOT_OPTIMIZED` and `PLATFORM`.
- * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints}
- */
-declare class HintCommentRuleParser {
-    /**
-     * Checks if the raw rule is a hint rule.
-     *
-     * @param raw Raw rule
-     * @returns `true` if the rule is a hint rule, `false` otherwise
-     */
-    static isHintRule(raw: string): boolean;
-    /**
-     * Parses a raw rule as a hint comment.
-     *
-     * @param raw Raw rule
-     * @param loc Base location
-     * @returns Hint AST or null (if the raw rule cannot be parsed as a hint comment)
-     * @throws If the input matches the HINT pattern but syntactically invalid
-     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints-1}
-     */
-    static parse(raw: string, loc?: Location): HintCommentRule | null;
-    /**
-     * Converts a hint rule AST to a raw string.
-     *
-     * @param ast Hint rule AST
-     * @returns Raw string
-     */
-    static generate(ast: HintCommentRule): string;
-}
-
-/**
- * @file Metadata comments
- */
-
-/**
- * `MetadataParser` is responsible for parsing metadata comments.
- * Metadata comments are special comments that specify some properties of the list.
- *
- * @example
- * For example, in the case of
- * ```adblock
- * ! Title: My List
- * ```
- * the name of the header is `Title`, and the value is `My List`, which means that
- * the list title is `My List`, and it can be used in the adblocker UI.
- * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#special-comments}
- */
-declare class MetadataCommentRuleParser {
-    /**
-     * Parses a raw rule as a metadata comment.
-     *
-     * @param raw Raw rule
-     * @param loc Base location
-     * @returns Metadata comment AST or null (if the raw rule cannot be parsed as a metadata comment)
-     */
-    static parse(raw: string, loc?: Location): MetadataCommentRule | null;
-    /**
-     * Converts a metadata comment AST to a string.
-     *
-     * @param ast - Metadata comment AST
-     * @returns Raw string
-     */
-    static generate(ast: MetadataCommentRule): string;
-}
-
-/**
- * Pre-processor directives
- *
- * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#pre-processor-directives}
- * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#pre-parsing-directives}
- */
-
-/**
- * `PreProcessorParser` is responsible for parsing preprocessor rules.
- * Pre-processor comments are special comments that are used to control the behavior of the filter list processor.
- * Please note that this parser only handles general syntax for now, and does not validate the parameters at
- * the parsing stage.
- *
- * @example
- * If your rule is
- * ```adblock
- * !#if (adguard)
- * ```
- * then the directive's name is `if` and its value is `(adguard)`, but the parameter list
- * is not parsed / validated further.
- * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#pre-processor-directives}
- * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#pre-parsing-directives}
- */
-declare class PreProcessorCommentRuleParser {
-    /**
-     * Determines whether the rule is a pre-processor rule.
-     *
-     * @param raw Raw rule
-     * @returns `true` if the rule is a pre-processor rule, `false` otherwise
-     */
-    static isPreProcessorRule(raw: string): boolean;
-    /**
-     * Parses a raw rule as a pre-processor comment.
-     *
-     * @param raw Raw rule
-     * @param loc Base location
-     * @returns
-     * Pre-processor comment AST or null (if the raw rule cannot be parsed as a pre-processor comment)
-     */
-    static parse(raw: string, loc?: Location): PreProcessorCommentRule | null;
-    /**
-     * Converts a pre-processor comment AST to a string.
-     *
-     * @param ast - Pre-processor comment AST
-     * @returns Raw string
-     */
-    static generate(ast: PreProcessorCommentRule): string;
-}
-
-/**
- * @file AGLint configuration comments. Inspired by ESLint inline configuration comments.
- * @see {@link https://eslint.org/docs/latest/user-guide/configuring/rules#using-configuration-comments}
- */
-
-/**
- * `ConfigCommentParser` is responsible for parsing inline AGLint configuration rules.
- * Generally, the idea is inspired by ESLint inline configuration comments.
- *
- * @see {@link https://eslint.org/docs/latest/user-guide/configuring/rules#using-configuration-comments}
- */
-declare class ConfigCommentRuleParser {
-    /**
-     * Checks if the raw rule is an inline configuration comment rule.
-     *
-     * @param raw Raw rule
-     * @returns `true` if the rule is an inline configuration comment rule, otherwise `false`.
-     */
-    static isConfigComment(raw: string): boolean;
-    /**
-     * Parses a raw rule as an inline configuration comment.
-     *
-     * @param raw Raw rule
-     * @param loc Base location
-     * @returns
-     * Inline configuration comment AST or null (if the raw rule cannot be parsed as configuration comment)
-     */
-    static parse(raw: string, loc?: Location): ConfigCommentRule | null;
-    /**
-     * Converts an inline configuration comment AST to a string.
-     *
-     * @param ast Inline configuration comment AST
-     * @returns Raw string
-     */
-    static generate(ast: ConfigCommentRule): string;
 }
 
 /**
@@ -1391,37 +1291,40 @@ declare class CommentRuleParser {
 }
 
 /**
- * `NetworkRuleParser` is responsible for parsing network rules.
- *
- * Please note that this will parse all syntactically correct network rules.
- * Modifier compatibility is not checked at the parser level.
- *
- * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#basic-rules}
- * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#basic}
+ * @file AGLint configuration comments. Inspired by ESLint inline configuration comments.
+ * @see {@link https://eslint.org/docs/latest/user-guide/configuring/rules#using-configuration-comments}
  */
-declare class NetworkRuleParser {
+
+/**
+ * `ConfigCommentParser` is responsible for parsing inline AGLint configuration rules.
+ * Generally, the idea is inspired by ESLint inline configuration comments.
+ *
+ * @see {@link https://eslint.org/docs/latest/user-guide/configuring/rules#using-configuration-comments}
+ */
+declare class ConfigCommentRuleParser {
     /**
-     * Parses a network rule (also known as basic rule).
+     * Checks if the raw rule is an inline configuration comment rule.
      *
      * @param raw Raw rule
-     * @param loc Location of the rule
-     * @returns Network rule AST
+     * @returns `true` if the rule is an inline configuration comment rule, otherwise `false`.
      */
-    static parse(raw: string, loc?: Location): NetworkRule;
+    static isConfigComment(raw: string): boolean;
     /**
-     * Finds the index of the separator character in a network rule.
+     * Parses a raw rule as an inline configuration comment.
      *
-     * @param rule Network rule to check
-     * @returns The index of the separator character, or -1 if there is no separator
+     * @param raw Raw rule
+     * @param loc Base location
+     * @returns
+     * Inline configuration comment AST or null (if the raw rule cannot be parsed as configuration comment)
      */
-    private static findNetworkRuleSeparatorIndex;
+    static parse(raw: string, loc?: Location): ConfigCommentRule | null;
     /**
-     * Converts a network rule (basic rule) AST to a string.
+     * Converts an inline configuration comment AST to a string.
      *
-     * @param ast - Network rule AST
+     * @param ast Inline configuration comment AST
      * @returns Raw string
      */
-    static generate(ast: NetworkRule): string;
+    static generate(ast: ConfigCommentRule): string;
 }
 
 /**
@@ -1461,12 +1364,176 @@ declare class CosmeticRuleParser {
      */
     static parse(raw: string, loc?: Location): AnyCosmeticRule | null;
     /**
+     * Generates the rule pattern from the AST.
+     *
+     * @param ast Cosmetic rule AST
+     * @returns Raw rule pattern
+     * @example
+     * - '##.foo' → ''
+     * - 'example.com,example.org##.foo' → 'example.com,example.org'
+     * - '[$path=/foo/bar]example.com##.foo' → '[$path=/foo/bar]example.com'
+     */
+    static generatePattern(ast: AnyCosmeticRule): string;
+    /**
+     * Generates the rule body from the AST.
+     *
+     * @param ast Cosmetic rule AST
+     * @returns Raw rule body
+     * @example
+     * - '##.foo' → '.foo'
+     * - 'example.com,example.org##.foo' → '.foo'
+     * - 'example.com#%#//scriptlet('foo')' → '//scriptlet('foo')'
+     */
+    static generateBody(ast: AnyCosmeticRule): string;
+    /**
      * Converts a cosmetic rule AST into a string.
      *
      * @param ast Cosmetic rule AST
      * @returns Raw string
      */
     static generate(ast: AnyCosmeticRule): string;
+}
+
+/**
+ * `DomainListParser` is responsible for parsing a domain list.
+ *
+ * @example
+ * - If the rule is `example.com,~example.net##.ads`, the domain list is `example.com,~example.net`.
+ * - If the rule is `ads.js^$script,domains=example.com|~example.org`, the domain list is `example.com|~example.org`.
+ * This parser is responsible for parsing these domain lists.
+ * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_domains}
+ */
+declare class DomainListParser {
+    /**
+     * Parses a domain list, eg. `example.com,example.org,~example.org`
+     *
+     * @param raw Raw domain list
+     * @param separator Separator character
+     * @param loc Location of the domain list
+     * @returns Domain list AST
+     * @throws If the domain list is syntactically invalid
+     */
+    static parse(raw: string, separator?: DomainListSeparator, loc?: Location): DomainList;
+    /**
+     * Converts a domain list AST to a string.
+     *
+     * @param ast Domain list AST
+     * @returns Raw string
+     */
+    static generate(ast: DomainList): string;
+}
+
+/**
+ * `FilterListParser` is responsible for parsing a whole adblock filter list (list of rules).
+ * It is a wrapper around `RuleParser` which parses each line separately.
+ */
+declare class FilterListParser {
+    /**
+     * Parses a whole adblock filter list (list of rules).
+     *
+     * @param raw Filter list source code (including new lines)
+     * @param tolerant If `true`, then the parser will not throw if the rule is syntactically invalid,
+     * instead it will return an `InvalidRule` object with the error attached to it. Default is `true`.
+     * It is useful for parsing filter lists with invalid rules, because most of the rules are valid,
+     * and some invalid rules can't break the whole filter list parsing.
+     * @returns AST of the source code (list of rules)
+     * @example
+     * ```js
+     * import { readFileSync } from 'fs';
+     * import { FilterListParser } from '@adguard/agtree';
+     *
+     * // Read filter list content from file
+     * const content = readFileSync('your-adblock-filter-list.txt', 'utf-8');
+     *
+     * // Parse the filter list content, then do something with the AST
+     * const ast = FilterListParser.parse(content);
+     * ```
+     * @throws If one of the rules is syntactically invalid (if `tolerant` is `false`)
+     */
+    static parse(raw: string, tolerant?: boolean): FilterList;
+    /**
+     * Serializes a whole adblock filter list (list of rules).
+     *
+     * @param ast AST to generate
+     * @param preferRaw If `true`, then the parser will use `raws.text` property of each rule
+     * if it is available. Default is `false`.
+     * @returns Serialized filter list
+     */
+    static generate(ast: FilterList, preferRaw?: boolean): string;
+}
+
+/**
+ * `HintRuleParser` is responsible for parsing AdGuard hint rules.
+ *
+ * @example
+ * The following hint rule
+ * ```adblock
+ * !+ NOT_OPTIMIZED PLATFORM(windows)
+ * ```
+ * contains two hints: `NOT_OPTIMIZED` and `PLATFORM`.
+ * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints}
+ */
+declare class HintCommentRuleParser {
+    /**
+     * Checks if the raw rule is a hint rule.
+     *
+     * @param raw Raw rule
+     * @returns `true` if the rule is a hint rule, `false` otherwise
+     */
+    static isHintRule(raw: string): boolean;
+    /**
+     * Parses a raw rule as a hint comment.
+     *
+     * @param raw Raw rule
+     * @param loc Base location
+     * @returns Hint AST or null (if the raw rule cannot be parsed as a hint comment)
+     * @throws If the input matches the HINT pattern but syntactically invalid
+     * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints-1}
+     */
+    static parse(raw: string, loc?: Location): HintCommentRule | null;
+    /**
+     * Converts a hint rule AST to a raw string.
+     *
+     * @param ast Hint rule AST
+     * @returns Raw string
+     */
+    static generate(ast: HintCommentRule): string;
+}
+
+/**
+ * @file AdGuard Hints
+ * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#hints}
+ */
+
+/**
+ * `HintParser` is responsible for parsing AdGuard hints.
+ *
+ * @example
+ * If the hint rule is
+ * ```adblock
+ * !+ NOT_OPTIMIZED PLATFORM(windows)
+ * ```
+ * then the hints are `NOT_OPTIMIZED` and `PLATFORM(windows)`, and this
+ * class is responsible for parsing them. The rule itself is parsed by
+ * the `HintRuleParser`, which uses this class to parse single hints.
+ */
+declare class HintParser {
+    /**
+     * Parses a raw rule as a hint.
+     *
+     * @param raw Raw rule
+     * @param loc Base location
+     * @returns Hint rule AST or null
+     * @throws If the syntax is invalid
+     */
+    static parse(raw: string, loc?: Location): Hint;
+    /**
+     * Converts a single hint AST to a string.
+     *
+     * @param hint Hint AST
+     * @returns Hint string
+     */
+    static generate(hint: Hint): string;
 }
 
 /**
@@ -1508,32 +1575,38 @@ declare class LogicalExpressionParser {
 }
 
 /**
- * `DomainListParser` is responsible for parsing a domain list.
+ * @file Metadata comments
+ */
+
+/**
+ * `MetadataParser` is responsible for parsing metadata comments.
+ * Metadata comments are special comments that specify some properties of the list.
  *
  * @example
- * - If the rule is `example.com,~example.net##.ads`, the domain list is `example.com,~example.net`.
- * - If the rule is `ads.js^$script,domains=example.com|~example.org`, the domain list is `example.com|~example.org`.
- * This parser is responsible for parsing these domain lists.
- * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#elemhide_domains}
+ * For example, in the case of
+ * ```adblock
+ * ! Title: My List
+ * ```
+ * the name of the header is `Title`, and the value is `My List`, which means that
+ * the list title is `My List`, and it can be used in the adblocker UI.
+ * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#special-comments}
  */
-declare class DomainListParser {
+declare class MetadataCommentRuleParser {
     /**
-     * Parses a domain list, eg. `example.com,example.org,~example.org`
+     * Parses a raw rule as a metadata comment.
      *
-     * @param raw Raw domain list
-     * @param separator Separator character
-     * @param loc Location of the domain list
-     * @returns Domain list AST
-     * @throws If the domain list is syntactically invalid
+     * @param raw Raw rule
+     * @param loc Base location
+     * @returns Metadata comment AST or null (if the raw rule cannot be parsed as a metadata comment)
      */
-    static parse(raw: string, separator?: DomainListSeparator, loc?: Location): DomainList;
+    static parse(raw: string, loc?: Location): MetadataCommentRule | null;
     /**
-     * Converts a domain list AST to a string.
+     * Converts a metadata comment AST to a string.
      *
-     * @param ast Domain list AST
+     * @param ast - Metadata comment AST
      * @returns Raw string
      */
-    static generate(ast: DomainList): string;
+    static generate(ast: MetadataCommentRule): string;
 }
 
 /**
@@ -1577,7 +1650,9 @@ declare class ModifierParser {
      *
      * @param raw Raw modifier string
      * @param loc Location of the modifier
+     *
      * @returns Parsed modifier
+     * @throws An error if modifier name or value is empty.
      */
     static parse(raw: string, loc?: Location): Modifier;
     /**
@@ -1587,6 +1662,40 @@ declare class ModifierParser {
      * @returns String representation of the modifier
      */
     static generate(modifier: Modifier): string;
+}
+
+/**
+ * `NetworkRuleParser` is responsible for parsing network rules.
+ *
+ * Please note that this will parse all syntactically correct network rules.
+ * Modifier compatibility is not checked at the parser level.
+ *
+ * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#basic-rules}
+ * @see {@link https://help.eyeo.com/adblockplus/how-to-write-filters#basic}
+ */
+declare class NetworkRuleParser {
+    /**
+     * Parses a network rule (also known as basic rule).
+     *
+     * @param raw Raw rule
+     * @param loc Location of the rule
+     * @returns Network rule AST
+     */
+    static parse(raw: string, loc?: Location): NetworkRule;
+    /**
+     * Finds the index of the separator character in a network rule.
+     *
+     * @param rule Network rule to check
+     * @returns The index of the separator character, or -1 if there is no separator
+     */
+    private static findNetworkRuleSeparatorIndex;
+    /**
+     * Converts a network rule (basic rule) AST to a string.
+     *
+     * @param ast - Network rule AST
+     * @returns Raw string
+     */
+    static generate(ast: NetworkRule): string;
 }
 
 declare class ParameterListParser {
@@ -1610,64 +1719,82 @@ declare class ParameterListParser {
 }
 
 /**
- * @file Customized syntax error class for Adblock Filter Parser.
+ * Pre-processor directives
+ *
+ * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#pre-processor-directives}
+ * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#pre-parsing-directives}
  */
 
 /**
- * Customized syntax error class for Adblock Filter Parser,
- * which contains the location range of the error.
+ * `PreProcessorParser` is responsible for parsing preprocessor rules.
+ * Pre-processor comments are special comments that are used to control the behavior of the filter list processor.
+ * Please note that this parser only handles general syntax for now, and does not validate the parameters at
+ * the parsing stage.
+ *
+ * @example
+ * If your rule is
+ * ```adblock
+ * !#if (adguard)
+ * ```
+ * then the directive's name is `if` and its value is `(adguard)`, but the parameter list
+ * is not parsed / validated further.
+ * @see {@link https://kb.adguard.com/en/general/how-to-create-your-own-ad-filters#pre-processor-directives}
+ * @see {@link https://github.com/gorhill/uBlock/wiki/Static-filter-syntax#pre-parsing-directives}
  */
-declare class AdblockSyntaxError extends SyntaxError {
+declare class PreProcessorCommentRuleParser {
     /**
-     * Location range of the error.
-     */
-    loc: LocationRange;
-    /**
-     * Constructs a new `AdblockSyntaxError` instance.
+     * Determines whether the rule is a pre-processor rule.
      *
-     * @param message Error message
-     * @param loc Location range of the error
+     * @param raw Raw rule
+     * @returns `true` if the rule is a pre-processor rule, `false` otherwise
      */
-    constructor(message: string, loc: LocationRange);
+    static isPreProcessorRule(raw: string): boolean;
+    /**
+     * Parses a raw rule as a pre-processor comment.
+     *
+     * @param raw Raw rule
+     * @param loc Base location
+     * @returns
+     * Pre-processor comment AST or null (if the raw rule cannot be parsed as a pre-processor comment)
+     */
+    static parse(raw: string, loc?: Location): PreProcessorCommentRule | null;
+    /**
+     * Converts a pre-processor comment AST to a string.
+     *
+     * @param ast - Pre-processor comment AST
+     * @returns Raw string
+     */
+    static generate(ast: PreProcessorCommentRule): string;
 }
 
 /**
- * `FilterListParser` is responsible for parsing a whole adblock filter list (list of rules).
- * It is a wrapper around `RuleParser` which parses each line separately.
+ * @file Validator for modifiers.
  */
-declare class FilterListParser {
+
+/**
+ * Modifier validator class.
+ */
+declare class ModifierValidator {
     /**
-     * Parses a whole adblock filter list (list of rules).
-     *
-     * @param raw Filter list source code (including new lines)
-     * @param tolerant If `true`, then the parser will not throw if the rule is syntactically invalid,
-     * instead it will return an `InvalidRule` object with the error attached to it. Default is `true`.
-     * It is useful for parsing filter lists with invalid rules, because most of the rules are valid,
-     * and some invalid rules can't break the whole filter list parsing.
-     * @returns AST of the source code (list of rules)
-     * @example
-     * ```js
-     * import { readFileSync } from 'fs';
-     * import { FilterListParser } from '@adguard/agtree';
-     *
-     * // Read filter list content from file
-     * const content = readFileSync('your-adblock-filter-list.txt', 'utf-8');
-     *
-     * // Parse the filter list content, then do something with the AST
-     * const ast = FilterListParser.parse(content);
-     * ```
-     * @throws If one of the rules is syntactically invalid (if `tolerant` is `false`)
+     * Map of all modifiers data parsed from yaml files.
      */
-    static parse(raw: string, tolerant?: boolean): FilterList;
+    private modifiersData;
     /**
-     * Serializes a whole adblock filter list (list of rules).
-     *
-     * @param ast AST to generate
-     * @param preferRaw If `true`, then the parser will use `raws.text` property of each rule
-     * if it is available. Default is `false`.
-     * @returns Serialized filter list
+     * List of all currently supported modifier names for any adblocker.
+     * Deprecated modifiers are not included.
      */
-    static generate(ast: FilterList, preferRaw?: boolean): string;
+    private supportedModifierNames;
+    constructor();
+    /**
+     * Simply checks whether the modifier exists in any adblocker.
+     *
+     * @param rawModifier Modifier as string OR already parsed modifier AST node.
+     *
+     * @returns True if modifier exists, false otherwise.
+     * If given modifier is a string and it cannot be parsed as a valid modifier,
+     * e.g. 'domain=', false is returned.
+     */
+    exists: (rawModifier: string | Modifier) => boolean;
 }
 
 /**
@@ -1765,6 +1892,13 @@ declare class CosmeticRuleSeparatorUtils {
      * @returns `true` if the separator is an exception, `false` otherwise
      */
     static isException(separator: CosmeticRuleSeparator): boolean;
+    /**
+     * Checks whether the specified separator is marks an Extended CSS cosmetic rule.
+     *
+     * @param separator Separator to check
+     * @returns `true` if the separator is marks an Extended CSS cosmetic rule, `false` otherwise
+     */
+    static isExtendedCssMarker(separator: CosmeticRuleSeparator): boolean;
     /**
      * Looks for the cosmetic rule separator in the rule. This is a simplified version that
      * masks the recursive function.
@@ -1969,7 +2103,7 @@ declare class CssTree {
      * @param forbiddenFunctions Set of the names of the functions to check
      * @returns List of the forbidden function nodes in the declaration block (can be empty)
      */
-    static getForbiddenFunctionNodes(declarationList: string | Block | BlockPlain, forbiddenFunctions?: Set<string>): CssNode[];
+    static getForbiddenFunctionNodes(declarationList: string | DeclarationList | DeclarationListPlain, forbiddenFunctions?: Set<string>): CssNode[];
     /**
      * Checks if the declaration block contains any forbidden functions. Typically it is used to check
      * if the declaration block contains any functions that can be used to load external resources,
@@ -1984,7 +2118,7 @@ declare class CssTree {
      * @see {@link https://github.com/AdguardTeam/AdguardBrowserExtension/issues/1196}
      * @see {@link https://github.com/AdguardTeam/AdguardBrowserExtension/issues/1920}
      */
-    static hasAnyForbiddenFunction(declarationList: string | Block | BlockPlain, forbiddenFunctions?: Set<string>): boolean;
+    static hasAnyForbiddenFunction(declarationList: string | DeclarationList | DeclarationListPlain, forbiddenFunctions?: Set<string>): boolean;
     /**
      * Generates string representation of the media query list.
      *
@@ -2183,4 +2317,4 @@ declare const FORBIDDEN_CSS_FUNCTIONS: Set<string>;
  */
 declare const version: string;
 
-export { ADG_SCRIPTLET_MASK, AGLINT_COMMAND_PREFIX, AdblockSyntax, AdblockSyntaxError, Agent, AgentCommentRule, AgentCommentRuleParser, AgentParser, AnyCommentRule, AnyCosmeticRule, AnyExpressionNode, AnyOperator, AnyRule, CLASSIC_DOMAIN_SEPARATOR, CommentBase, CommentMarker, CommentRule, CommentRuleParser, CommentRuleType, ConfigCommentRule, ConfigCommentRuleParser, CosmeticRule, CosmeticRuleParser, CosmeticRuleSeparator, CosmeticRuleSeparatorFinderResult, CosmeticRuleSeparatorUtils, CosmeticRuleType, CssInjectionRule, CssInjectionRuleBody, CssTree, CssTreeNodeType, CssTreeParserContext, DOMAIN_EXCEPTION_MARKER, Domain, DomainList, DomainListParser, DomainListSeparator, DomainUtils, EXT_CSS_LEGACY_ATTRIBUTES, EXT_CSS_PSEUDO_CLASSES, ElementHidingRule, ElementHidingRuleBody, EmptyRule, ExpressionOperatorNode, ExpressionParenthesisNode, ExpressionVariableNode, FORBIDDEN_CSS_FUNCTIONS, FilterList, FilterListParser, HINT_MARKER, Hint, HintCommentRule, HintCommentRuleParser, HintParser, HtmlFilteringRule, HtmlFilteringRuleBody, HtmlRuleConverter, IF, INCLUDE, JsInjectionRule, Location, LocationRange, LogicalExpressionParser, LogicalExpressionUtils, METADATA_HEADERS, MODIFIERS_SEPARATOR, MODIFIER_ASSIGN_OPERATOR, MODIFIER_DOMAIN_SEPARATOR, MODIFIER_EXCEPTION_MARKER, MetadataCommentRule, MetadataCommentRuleParser, Modifier, ModifierList, ModifierListParser, ModifierParser, NETWORK_RULE_EXCEPTION_MARKER, NETWORK_RULE_SEPARATOR, NetworkRule, NetworkRuleParser, Node, PREPROCESSOR_MARKER, Parameter, ParameterList, ParameterListParser, PreProcessorCommentRule, PreProcessorCommentRuleParser, RuleBase, RuleCategory, RuleParser, SAFARI_CB_AFFINITY, ScriptletInjectionRule, ScriptletInjectionRuleBody, UBO_SCRIPTLET_MASK, Value, VariableTable, locRange, shiftLoc, version };
+export { ADG_SCRIPTLET_MASK, AGLINT_COMMAND_PREFIX, AdblockSyntax, AdblockSyntaxError, Agent, AgentCommentRule, AgentCommentRuleParser, AgentParser, AnyCommentRule, AnyCosmeticRule, AnyExpressionNode, AnyOperator, AnyRule, CLASSIC_DOMAIN_SEPARATOR, CommentBase, CommentMarker, CommentRule, CommentRuleParser, CommentRuleType, ConfigCommentRule, ConfigCommentRuleParser, CosmeticRule, CosmeticRuleParser, CosmeticRuleSeparator, CosmeticRuleSeparatorFinderResult, CosmeticRuleSeparatorUtils, CosmeticRuleType, CssInjectionRule, CssInjectionRuleBody, CssTree, CssTreeNodeType, CssTreeParserContext, DOMAIN_EXCEPTION_MARKER, Domain, DomainList, DomainListParser, DomainListSeparator, DomainUtils, EXT_CSS_LEGACY_ATTRIBUTES, EXT_CSS_PSEUDO_CLASSES, ElementHidingRule, ElementHidingRuleBody, EmptyRule, ExpressionOperatorNode, ExpressionParenthesisNode, ExpressionVariableNode, FORBIDDEN_CSS_FUNCTIONS, FilterList, FilterListParser, HINT_MARKER, Hint, HintCommentRule, HintCommentRuleParser, HintParser, HtmlFilteringRule, HtmlFilteringRuleBody, HtmlRuleConverter, IF, INCLUDE, JsInjectionRule, Location, LocationRange, LogicalExpressionParser, LogicalExpressionUtils, METADATA_HEADERS, MODIFIERS_SEPARATOR, MODIFIER_ASSIGN_OPERATOR, MODIFIER_DOMAIN_SEPARATOR, MODIFIER_EXCEPTION_MARKER, MetadataCommentRule, MetadataCommentRuleParser, Modifier, ModifierList, ModifierListParser, ModifierParser, ModifierValidator, NETWORK_RULE_EXCEPTION_MARKER, NETWORK_RULE_SEPARATOR, NetworkRule, NetworkRuleParser, Node, PREPROCESSOR_MARKER, Parameter, ParameterList, ParameterListParser, PreProcessorCommentRule, PreProcessorCommentRuleParser, RuleBase, RuleCategory, RuleParser, SAFARI_CB_AFFINITY, ScriptletInjectionRule, ScriptletInjectionRuleBody, UBO_SCRIPTLET_MASK, Value, VariableTable, locRange, shiftLoc, version };
