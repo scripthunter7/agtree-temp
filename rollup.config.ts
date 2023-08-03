@@ -91,10 +91,6 @@ const nodePlugins = (esm = false) => [
             [
                 '@babel/preset-env',
                 {
-                    targets: {
-                        // At least Node.js 14 is required
-                        node: '14',
-                    },
                     modules: esm ? false : 'auto',
                 },
             ],
